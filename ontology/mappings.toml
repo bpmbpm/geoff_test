@@ -1,0 +1,12 @@
+# ontology/mappings.toml — маппинг frontmatter → RDF
+
+[types]
+"Note" = "http://schema.org/CreativeWork"
+"Person" = "http://schema.org/Person"
+
+[fields]
+title = "http://schema.org/name"
+date = "http://schema.org/datePublished"
+author = "http://schema.org/author"
+tags = "http://schema.org/keywords"
+related = "http://schema.org/mentions"
