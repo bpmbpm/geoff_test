@@ -14,6 +14,9 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # убирает предупреждение о Node.js 20
+
 jobs:
   deploy:
     environment:
@@ -24,13 +27,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install Geoff
-        run: npm install -g @chapeaux/geoff
+        run: cargo install chapeaux-geoff
 
       - name: Build Site
         run: geoff build --output-dir dist
