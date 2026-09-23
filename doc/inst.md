@@ -16,4 +16,4 @@ README.md
 
 ## 4
 - https://github.com/chapeaux/geoff
-- https://docs.rs/crate/chapeaux-geoff/latest
+- https://docs.rs/crate/chapeaux-geoff/latest ; https://chapeaux.github.io/
