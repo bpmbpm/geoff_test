@@ -1,6 +1,7 @@
 +++
 title = "Главная"
 type = "Note"
+template = "blog-page.html"
 +++
 
 # Мой семантический Zettelkasten
