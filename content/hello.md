@@ -1,6 +1,7 @@
 +++
 title = "Hello Semantic World"
 type = "Note"
+template = "blog-page.html"
 date = 2026-04-10
 author = "Alice"
 tags = ["semantic", "hello-world"]
