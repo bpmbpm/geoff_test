@@ -9,6 +9,8 @@ ontology/mappings.toml
 geoff.toml  
 README.md  
 
+templates/blog-page.html см. https://github.com/bpmbpm/geoff_test/blob/main/doc/bug4.md
+
 ## 3
 
 - Settings /  GitHub Pages
