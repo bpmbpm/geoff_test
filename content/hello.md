@@ -18,4 +18,4 @@ related = "content/index.md"
 - `date` → `schema:datePublished`
 - `tags` → `schema:keywords`
 
-Все эти данные доступны для SPARQL-запросов в браузере.
+Все эти данные доступны для SPARQL-запросов в браузере..
