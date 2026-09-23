@@ -1,0 +1,13 @@
+# geoff.toml — основная конфигурация статического сайта
+title = "Мой семантический Zettelkasten"
+base_url = "/geoff_test"
+content_dir = "content"
+output_dir = "dist"
+
+# Шаблон, который будет использоваться по умолчанию
+default_template = "blog-page.html"
+
+# Включаем клиентский SPARQL-поиск через Oxigraph WASM
+[search]
+enabled = true
+engine = "oxigraph-wasm"
