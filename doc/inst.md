@@ -13,3 +13,7 @@ README.md
 
 - Settings /  GitHub Pages
 - В разделе Source выберите GitHub Actions (не «Deploy from a branch»).
+
+## 4
+- https://github.com/chapeaux/geoff
+- https://docs.rs/crate/chapeaux-geoff/latest
