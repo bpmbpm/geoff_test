@@ -101,3 +101,63 @@ Geoff автоматически ищет шаблоны в папке `template
 
 ## 2
 
+Вы абсолютно правы — это более простое решение. Если создать `blog-page.html`, то **не нужно менять фронтматтер ни в одном файле**: все заметки уже ссылаются на `blog-page.html`, и Geoff просто найдёт этот шаблон. Это меньше правок и меньше шансов что-то пропустить.
+
+Я предложил `page.html` только потому, что это имя используется Geoff как шаблон по умолчанию (когда `template` вообще не указан). Но раз в ваших файлах уже явно прописан `blog-page.html`, логичнее просто создать именно этот файл.
+
+### 🛠️ Решение: создать файл `templates/blog-page.html`
+
+Создайте в корне репозитория папку `templates`, а внутри — файл `blog-page.html`:
+
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} — Мой семантический Zettelkasten</title>
+</head>
+<body>
+    <main>
+        <h1>{{ title }}</h1>
+        {{ content | safe }}
+    </main>
+</body>
+</html>
+```
+
+После этого **фронтматтер менять не нужно**. Файлы `content/index.md`, `content/hello.md`, `content/bob.md` остаются как есть — с `template = "blog-page.html"`.
+
+### 📂 Итоговая структура
+
+```
+geoff_test/
+├── .github/
+│   └── workflows/
+│       └── deploy.yml
+├── content/
+│   ├── index.md
+│   ├── hello.md
+│   └── bob.md
+├── templates/
+│   └── blog-page.html     ← новый файл
+├── geoff.toml
+├── ontology/
+│   └── mappings.toml
+└── README.md
+```
+
+### 💡 Почему это лучше
+
+| Подход | Правок | Риск ошибки |
+|---|---|---|
+| Создать `blog-page.html` | 1 файл | Минимальный |
+| Создать `page.html` + менять фронтматтер | 4 файла | Можно пропустить заметку |
+
+Если в будущем вы захотите разные шаблоны для разных типов страниц (например, `note.html` для заметок и `index.html` для главной), вы просто создадите дополнительные файлы в `templates/` и укажете их в фронтматтере. Но для «Hello world» одного `blog-page.html` достаточно.
+
+### 🔗 Ссылки
+
+- Geoff (репозиторий) — https://github.com/chapeaux/geoff
+- Tera (шаблонизатор, используемый Geoff) — https://keats.github.io/tera/
+  
