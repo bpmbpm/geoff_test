@@ -55,4 +55,98 @@
 - Geoff (GitHub) — https://github.com/chapeaux/geoff
 - @chapeaux/geoff (npm) — https://www.npmjs.com/package/@chapeaux/geoff
 
-  
+## 1a
+Проблема в самом workflow — он падает с ошибкой `exit code 1`.
+
+Предупреждение о Node.js 20 — это не причина падения, а лишь уведомление о том, что GitHub постепенно переводит экшены на Node.js 24. Ошибка `exit code 1` означает, что один из шагов workflow завершился с ошибкой. Скорее всего, это шаг **Install Geoff** или **Build Site**.
+
+### 🔍 Наиболее вероятная причина: Geoff — это Rust-инструмент, а не npm-пакет
+
+Geoff — это статический генератор на Rust, который распространяется через **crates.io** под именем `chapeaux-geoff`. Хотя в документации упоминается установка через `npm install -g @chapeaux/geoff`, этот npm-пакет может быть неполным, устаревшим или вовсе отсутствовать в реестре. Если `npm install` не может найти пакет, шаг падает с `exit code 1`.
+
+**Проверить это можно так:** откройте последний запуск workflow на вкладке **Actions**, раскройте шаг **Install Geoff** и посмотрите на текст ошибки. Если там `404 Not Found` или `npm ERR! 404`, значит, пакет не найден.
+
+### 🛠️ Решение: установить Geoff через Cargo (Rust)
+
+Вместо `npm install -g @chapeaux/geoff` нужно использовать `cargo install chapeaux-geoff`. Это потребует настройки Rust в workflow. Вот исправленный `.github/workflows/deploy.yml`:
+
+```yaml
+name: Deploy Geoff Semantic Wiki
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # убирает предупреждение о Node.js 20
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Geoff
+        run: cargo install chapeaux-geoff
+
+      - name: Build Site
+        run: geoff build --output-dir dist
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "dist"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+```
+
+### 📋 Что изменилось и почему
+
+| Было | Стало | Причина |
+|---|---|---|
+| `actions/setup-node@v4` | `dtolnay/rust-toolchain@stable` | Geoff написан на Rust, ему нужен Rust-тулчейн, а не Node.js |
+| `npm install -g @chapeaux/geoff` | `cargo install chapeaux-geoff` | Установка из crates.io — официальный способ для Rust-инструментов |
+| `node-version: '20'` | — (убрано) | Node.js больше не нужен для сборки Geoff |
+| — | `env: FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` | Убирает предупреждение о Node.js 20 |
+
+### ⚠️ Важное замечание о времени сборки
+
+`cargo install chapeaux-geoff` **компилирует Geoff из исходников**, что может занять **5–15 минут** при первом запуске. GitHub Actions имеет лимит в 6 часов на job, так что это не проблема, но первый деплой будет долгим. Последующие запуски могут быть быстрее, если кэшировать `~/.cargo` и `target/`, но для тестового проекта это не обязательно.
+
+### 🔄 Что делать дальше
+
+1. Откройте `.github/workflows/deploy.yml` в репозитории.
+2. Замените содержимое на исправленный вариант выше.
+3. Нажмите **Commit changes**.
+4. Перейдите на вкладку **Actions** и дождитесь завершения нового запуска (он может идти 5–15 минут).
+5. Если сборка пройдёт успешно — сайт появится по адресу `https://bpmbpm.github.io/geoff_test/`.
+
+Если после этого workflow снова упадёт, пришлите текст ошибки из шага **Install Geoff** или **Build Site** — я помогу разобраться.
+
+### 🔗 Ссылки
+
+- chapeaux-geoff на crates.io — https://crates.io/crates/chapeaux-geoff
+- Geoff на lib.rs — https://lib.rs/crates/geoff-content
+- Rust toolchain action — https://github.com/dtolnay/rust-toolchain
+- GitHub Actions: Node.js 20 deprecation — https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+
+
