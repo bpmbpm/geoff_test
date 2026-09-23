@@ -1,21 +1,32 @@
 +++
-title = "Hello Semantic World"
+title = "Главная"
 type = "Note"
-date = 2026-04-10
-author = "Alice"
-tags = ["semantic", "hello-world"]
-related = "content/index.md"
 +++
 
-# Hello Semantic World
+# Мой семантический Zettelkasten
 
-Это моя первая семантическая заметка.
+Это тестовая семантическая вики, собранная с помощью Geoff.
 
-Она автоматически превращается в RDF-триплеты:
+## Все заметки
 
-- `title` → `schema:name`
-- `author` → `schema:author`
-- `date` → `schema:datePublished`
-- `tags` → `schema:keywords`
+<div id="sparql-results">Загрузка...</div>
 
-Все эти данные доступны для SPARQL-запросов в браузере.
+<script type="module">
+  import { init } from '@chapeaux/geoff-client';
+
+  const engine = await init();
+
+  const results = await engine.query(`
+    PREFIX schema: <http://schema.org/>
+    SELECT ?title ?author WHERE {
+      ?note a schema:CreativeWork ;
+            schema:name ?title ;
+            schema:author ?author .
+    }
+    ORDER BY ?title
+  `);
+
+  document.getElementById('sparql-results').innerHTML = results
+    .map(r => `<div><strong>${r.title.value}</strong> — ${r.author.value}</div>`)
+    .join('');
+</script>
