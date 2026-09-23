@@ -27,7 +27,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Rust
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libssl-dev libclang-dev clang
+
+      - name: Setup Rust (nightly)
         uses: dtolnay/rust-toolchain@nightly
 
       - name: Install Geoff
@@ -37,7 +42,7 @@ jobs:
         run: geoff --version
 
       - name: Build Site
-        run: geoff build --output-dir dist
+        run: geoff build
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
