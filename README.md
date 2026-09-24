@@ -1,8 +1,9 @@
 # geoff_test
 geoff_test — семантический Zettelkasten на GitHub Pages  
-https://bpmbpm.github.io/geoff_test/
+https://bpmbpm.github.io/geoff_test/  
+так и не заработало, см. https://github.com/bpmbpm/geoff_test/blob/main/doc/bug4.md#3a
 
-Демонстрационный проект, показывающий, как развернуть семантическую вики на GitHub Pages с использованием [Geoff](https://github.com/chapeaux/geoff) — статического генератора сайтов, построенного на linked data.
+Демонстрационный проект, (не) показывающий, как развернуть семантическую вики на GitHub Pages с использованием [Geoff](https://github.com/chapeaux/geoff) — статического генератора сайтов, построенного на linked data.
 
 ## Что это?
 
