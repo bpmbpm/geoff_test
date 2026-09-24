@@ -424,3 +424,96 @@ ORDER BY ?title</textarea>
 - Oxigraph WASM на jsDelivr — https://cdn.jsdelivr.net/npm/oxigraph@latest/web.js
 - Geoff: раздел Client-Side Search — https://lib.rs/crates/geoff-reading-time
 - N-Triples (W3C) — https://www.w3.org/TR/n-triples/
+
+## 3a
+
+Вы правы, в артефакте `github-pages` папки `dist` не будет. И это нормально, потому что `actions/upload-pages-artifact` **копирует содержимое указанной папки в корень артефакта**. То есть все файлы, которые Geoff сгенерировал в `dist/`, оказываются в корне архива. Именно поэтому на вашем сайте отображается контент — артефакт содержит готовые HTML-файлы, а не папку `dist`.
+
+### 🔍 Что же тогда делать с RDF-графом?
+
+Geoff не создаёт отдельный файл `.nt` или `.ttl` в папке `dist/`. Вместо этого он **встраивает JSON-LD прямо в HTML-страницы**. Это указано в документации: «Produces static HTML in `dist/` with embedded JSON-LD». То есть RDF-граф существует внутри `<script type="application/ld+json">` на каждой странице.
+
+Если вы хотите выполнять **интерактивные клиентские SPARQL-запросы**, вам нужно:
+
+1. **Извлечь JSON-LD** из HTML-страниц.
+2. **Преобразовать его в RDF-квады** (например, с помощью библиотеки `jsonld`).
+3. **Загрузить квады в Oxigraph WASM** и выполнять SPARQL.
+
+Geoff заявляет поддержку клиентского SPARQL через Oxigraph WASM, но, судя по всему, эта функция доступна только в **оригинальных шаблонах**, которые создаются командой `geoff init --template blog`. В вашем минимальном шаблоне `blog-page.html` этого кода нет.
+
+### 🛠️ Как проверить, что JSON-LD есть в HTML
+
+Скачайте артефакт `github-pages` (это можно сделать на вкладке **Actions** в последнем запуске, внизу страницы). Распакуйте архив — вы увидите `index.html`, `hello.html`, `bob.html` и другие файлы. Откройте любой из них в текстовом редакторе и поищите строку `application/ld+json`. Если она есть — значит, RDF-данные встроены в страницу.
+
+### 📋 Что можно сделать, чтобы получить клиентский SPARQL
+
+**Вариант 1. Использовать оригинальный шаблон Geoff**
+
+Самый надёжный путь — заменить ваш `blog-page.html` на оригинальный шаблон из стартового набора. Для этого:
+
+1. Локально (или в GitHub Codespaces) выполните `geoff init my-site --template blog`.
+2. Скопируйте файл `templates/blog-page.html` из сгенерированного проекта.
+3. Замените им ваш текущий `blog-page.html` в репозитории.
+
+Оригинальный шаблон уже содержит все необходимые подключения к Oxigraph WASM и обрабатывает блоки `sparql` в Tera.
+
+**Вариант 2. Написать собственный JavaScript для извлечения JSON-LD и загрузки в Oxigraph**
+
+Если вы хотите оставить минимальный шаблон, можно добавить скрипт, который:
+
+1. Собирает все JSON-LD блоки со страницы.
+2. Преобразует их в RDF-квады.
+3. Загружает в Oxigraph и выполняет SPARQL.
+
+Пример кода (требует библиотек `jsonld` и `oxigraph`):
+
+```html
+<script type="module">
+  import jsonld from 'https://cdn.jsdelivr.net/npm/jsonld/+esm';
+  import init, * as oxigraph from 'https://cdn.jsdelivr.net/npm/oxigraph@latest/web.js';
+
+  await init();
+  const store = new oxigraph.Store();
+
+  // 1. Собираем все JSON-LD со страницы
+  const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+  const jsonldData = [];
+  for (const script of scripts) {
+    try {
+      jsonldData.push(JSON.parse(script.textContent));
+    } catch (e) { console.warn('Ошибка парсинга JSON-LD', e); }
+  }
+
+  // 2. Преобразуем JSON-LD в N-Quads
+  const nquads = await jsonld.toRDF(jsonldData, { format: 'application/n-quads' });
+
+  // 3. Загружаем в Oxigraph
+  store.load(nquads, { format: 'application/n-quads' });
+
+  // 4. Выполняем SPARQL
+  const results = store.query(`
+    PREFIX schema: <http://schema.org/>
+    SELECT ?title ?author WHERE {
+      ?note a schema:CreativeWork ;
+            schema:name ?title ;
+            schema:author ?author .
+    }
+  `);
+
+  console.log([...results]);
+</script>
+```
+
+Этот подход работает, но требует, чтобы JSON-LD на странице был полным (содержал все нужные триплеты). Geoff генерирует JSON-LD для каждой страницы отдельно, поэтому на одной странице вы получите только триплеты этой страницы, а не всего графа.
+
+### 💎 Итог
+
+Папки `dist` в артефакте нет, потому что `upload-pages-artifact` копирует её содержимое в корень. RDF-граф в Geoff **не сериализуется в отдельный файл**, а встраивается в HTML как JSON-LD. Для клиентского SPARQL вам либо нужно взять оригинальный шаблон Geoff (Вариант 1), либо написать собственный скрипт, который извлекает JSON-LD и загружает его в Oxigraph (Вариант 2).
+
+Если вы хотите **интерактивный SPARQL без всех этих сложностей**, рекомендую вернуться к **Rete** — он делает именно то, что вам нужно: упаковывает RDF-граф в один файл и позволяет выполнять SPARQL в браузере без возни с JSON-LD и шаблонами.
+
+### 🔗 Ссылки
+
+- Geoff: описание JSON-LD и сборки в dist/ — https://lib.rs/crates/geoff-server
+- Oxigraph для JavaScript (CDN) — https://cdn.jsdelivr.net/npm/oxigraph
+- Библиотека jsonld (CDN) — https://cdn.jsdelivr.net/npm/jsonld
